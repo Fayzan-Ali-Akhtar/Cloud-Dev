@@ -4,6 +4,10 @@ resource "aws_lambda_function" "request_receiver" {
   handler       = "request_receiver.handler"
   runtime       = "python3.8"
   role          = aws_iam_role.lambda_role.arn
+
+  timeout      = 15
+  # memory_size  = 256
+
   environment {
     variables = {
       RAW_BUCKET    = aws_s3_bucket.raw_data_bucket.bucket
@@ -12,12 +16,17 @@ resource "aws_lambda_function" "request_receiver" {
   }
 }
 
+
 resource "aws_lambda_function" "analytics_calculator" {
   function_name = "analytics_calculator_lambda"
   filename      = "../lambdas/analytics_calculator.zip"
   handler       = "analytics_calculator.handler"
   runtime       = "python3.8"
   role          = aws_iam_role.lambda_role.arn
+
+  timeout      = 15
+  # memory_size  = 256
+
   environment {
     variables = {
       RAW_BUCKET    = aws_s3_bucket.raw_data_bucket.bucket
@@ -33,6 +42,10 @@ resource "aws_lambda_function" "result_notifier" {
   handler       = "result_notifier.handler"
   runtime       = "python3.8"
   role          = aws_iam_role.lambda_role.arn
+
+  timeout      = 15
+  # memory_size  = 256
+
   environment {
     variables = {
       STATS_BUCKET  = aws_s3_bucket.stats_bucket.bucket
