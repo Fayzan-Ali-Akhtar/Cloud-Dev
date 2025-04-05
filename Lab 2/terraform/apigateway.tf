@@ -37,7 +37,6 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   rest_api_id = aws_api_gateway_rest_api.quiz_api.id
   stage_name  = "prod"
 
-  # Force the deployment to wait until method + integration are created
   depends_on = [
     aws_api_gateway_method.post_method,
     aws_api_gateway_integration.lambda_integration
