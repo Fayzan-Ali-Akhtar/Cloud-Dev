@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 provider "docker" {
-  # Assumes Docker is running locally
+  # Uses your local Docker daemon
 }
 
 locals {
@@ -64,19 +64,16 @@ resource "aws_cognito_user_pool" "user_pool" {
 }
 
 resource "aws_cognito_user_pool_client" "user_pool_client" {
-  name            = var.cognito_client_name
-  user_pool_id    = aws_cognito_user_pool.user_pool.id
-  generate_secret = false
-  explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH"
-  ]
-  allowed_oauth_flows       = ["code"]
-  allowed_oauth_scopes      = ["email", "openid", "profile"]
-  callback_urls             = ["https://your-frontend-domain.com/"]  # Change when deploying frontend
-  logout_urls               = ["https://your-frontend-domain.com/"]
+  name                                = var.cognito_client_name
+  user_pool_id                        = aws_cognito_user_pool.user_pool.id
+  generate_secret                     = false
+  explicit_auth_flows                 = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
+  allowed_oauth_flows                 = ["code"]
+  allowed_oauth_scopes                = ["email", "openid", "profile"]
+  callback_urls                       = ["https://your-frontend-domain.com/"]  # Update when deploying
+  logout_urls                         = ["https://your-frontend-domain.com/"]
   allowed_oauth_flows_user_pool_client = true
-  tags                      = local.common_tags
+  tags                                = local.common_tags
 }
 
 resource "aws_cognito_user_group" "simple_users" {
@@ -129,12 +126,11 @@ resource "aws_ecr_repository" "backend_repo" {
   tags = local.common_tags
 }
 
-# Build and push Docker image using the Docker provider.
-# (Assumes your backend Dockerfile is in ../backend relative to terraform folder)
+# Build and push Docker image (using local Docker)
 data "aws_caller_identity" "current" {}
 
 resource "docker_image" "backend_image" {
-  name         = "${aws_ecr_repository.backend_repo.repository_url}:latest"
+  name = "${aws_ecr_repository.backend_repo.repository_url}:latest"
   build {
     context    = "../backend"
     dockerfile = "../backend/Dockerfile"
@@ -181,7 +177,6 @@ resource "aws_security_group" "ecs_sg" {
   tags = local.common_tags
 }
 
-# ECS Task Definition using Fargate
 resource "aws_ecs_task_definition" "backend_task" {
   family                   = "Lab3BackendTask"
   network_mode             = "awsvpc"
@@ -245,12 +240,11 @@ resource "aws_s3_bucket" "frontend_bucket" {
   tags = local.common_tags
 }
 
-# (Optional) Use a null_resource with local-exec to sync your pre-built frontend
+# Use null_resource with local-exec to sync your built frontend files (assumes frontend build output is in ../frontend/dist)
 resource "null_resource" "upload_frontend" {
   provisioner "local-exec" {
     command = "aws s3 sync ../frontend/dist s3://${aws_s3_bucket.frontend_bucket.bucket} --delete"
   }
-  # Run this after S3 bucket creation
   depends_on = [aws_s3_bucket.frontend_bucket]
 }
 
@@ -285,7 +279,6 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
 # Database Schema – Run SQL Script via null_resource
 # -----------------------------
 resource "null_resource" "provision_db_schema" {
-  # Requires the db_schema.sql file in this folder.
   provisioner "local-exec" {
     command = <<EOT
       PGPASSWORD=${var.db_password} psql -h ${aws_db_instance.tasks_db.address} -U ${var.db_username} -d ${var.db_name} -f ${path.module}/db_schema.sql

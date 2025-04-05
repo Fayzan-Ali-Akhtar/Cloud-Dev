@@ -16,7 +16,7 @@ variable "db_username" {
 }
 
 variable "db_password" {
-  default = "Admin1234!"   # In production, use secrets management
+  default = "Admin1234!"   # In production, use a secure secrets manager
 }
 
 variable "db_name" {
