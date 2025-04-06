@@ -80,13 +80,35 @@ app.post('/login', async (req, res) => {
     };
 
     try {
+        // Step 1: Authenticate user
         const data = await cognito.initiateAuth(params).promise();
-        res.status(200).json({ message: 'Login successful', data });
+
+        // Step 2: Fetch the user's group (role)
+        const groupParams = {
+            Username: email,
+            UserPoolId: userPoolId
+        };
+
+        const groupData = await cognito.adminListGroupsForUser(groupParams).promise();
+
+        let role = 'Unknown';
+        if (groupData.Groups && groupData.Groups.length > 0) {
+            // Assuming the user only belongs to one group (e.g., Admins or SimpleUsers)
+            role = groupData.Groups[0].GroupName;
+        }
+
+        // Step 3: Send response
+        res.status(200).json({
+            message: 'Login successful',
+            role: role,
+            data
+        });
     } catch (err) {
         console.error('Login error:', err);
         res.status(400).json({ error: err.message });
     }
 });
+
 
 
 // Callback handler
@@ -136,11 +158,11 @@ app.post('/signup', async (req, res) => {
 
 app.post('/confirm', async (req, res) => {
     console.log('Confirm route hit');
-    const { email, code } = req.body;
+    const { email, code, role } = req.body;
 
     const secretHash = generateSecretHash(email, clientId, clientSecret);
 
-    const params = {
+    const confirmParams = {
         ClientId: clientId,
         Username: email,
         ConfirmationCode: code,
@@ -148,13 +170,24 @@ app.post('/confirm', async (req, res) => {
     };
 
     try {
-        await cognito.confirmSignUp(params).promise();
-        res.status(200).json({ message: 'User confirmed successfully.' });
+        await cognito.confirmSignUp(confirmParams).promise();
+
+        // Add to Cognito group
+        const groupParams = {
+            GroupName: role || "SimpleUsers",
+            UserPoolId: userPoolId,
+            Username: email
+        };
+
+        await cognito.adminAddUserToGroup(groupParams).promise();
+
+        res.status(200).json({ message: `User confirmed and added to ${groupParams.GroupName} group.` });
     } catch (err) {
         console.error('Confirmation error:', err);
         res.status(400).json({ error: err.message });
     }
 });
+
 
 
 // Logout route
