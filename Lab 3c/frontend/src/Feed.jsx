@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { get_tasks_url,create_tasks_url,update_task_title_url,update_task_status_url,delete_task_url } from './constants'; 
+import {
+  get_tasks_url,
+  create_tasks_url,
+  update_task_title_url,
+  update_task_status_url,
+  delete_task_url
+} from './constants';
 
 const Feed = () => {
   const [tasks, setTasks] = useState([]);
@@ -11,13 +17,11 @@ const Feed = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Retrieve token and role from localStorage
   const token = localStorage.getItem('accessToken');
-  const userRole = localStorage.getItem('userRole'); // 'SimpleUsers' or 'Admins'
+  const userRole = localStorage.getItem('userRole');
 
   useEffect(() => {
     if (!token) {
-      // If no token exists, redirect to login
       navigate('/login');
     } else {
       fetchTasks();
@@ -32,10 +36,8 @@ const Feed = () => {
       setTasks(response.data);
     } catch (err) {
       if (err.response && err.response.status === 403) {
-        // Token expired or invalid
         alert('Session expired, please log in again.');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('userRole');
+        localStorage.clear();
         navigate('/login');
       } else {
         setError('Failed to fetch tasks.');
@@ -52,10 +54,9 @@ const Feed = () => {
         { text: newTask },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Prepend the new task to the tasks list
       setTasks([response.data.task, ...tasks]);
       setNewTask('');
-    } catch (err) {
+    } catch {
       setError('Failed to create task.');
     }
   };
@@ -72,11 +73,10 @@ const Feed = () => {
         { task: editingTaskText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Update the task in the state
       setTasks(tasks.map(task => task.id === taskId ? response.data : task));
       setEditingTaskId(null);
       setEditingTaskText('');
-    } catch (err) {
+    } catch {
       setError('Failed to update task.');
     }
   };
@@ -84,16 +84,15 @@ const Feed = () => {
   const handleToggleComplete = async (taskId, currentStatus) => {
     try {
       const updatedStatus = !currentStatus;
-    const response = await axios.put(
+      await axios.put(
         `${update_task_status_url}/${taskId}`,
         { is_complete: updatedStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Update the task's is_complete status in the state
       setTasks(tasks.map(task =>
         task.id === taskId ? { ...task, is_complete: updatedStatus } : task
       ));
-    } catch (err) {
+    } catch {
       setError('Failed to update task status.');
     }
   };
@@ -103,82 +102,122 @@ const Feed = () => {
       await axios.delete(`${delete_task_url}/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Remove the deleted task from the state
       setTasks(tasks.filter(task => task.id !== taskId));
-    } catch (err) {
+    } catch {
       setError('Failed to delete task.');
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('userRole');
+    localStorage.clear();
     navigate('/login');
   };
 
   return (
-    <div>
-      <h2>Task Feed</h2>
-      <button onClick={handleLogout}>Logout</button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-sky-100 to-lime-100 p-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-4xl font-extrabold text-violet-600">Your Tasks</h2>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold shadow transition"
+          >
+            Logout
+          </button>
+        </div>
 
-      {/* If role is SimpleUsers, show the create task form */}
-      {userRole === 'SimpleUsers' && (
-        <form onSubmit={handleCreateTask}>
-          <input
-            type="text"
-            placeholder="Enter new task"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-          />
-          <button type="submit">Add Task</button>
-        </form>
-      )}
+        {error && (
+          <div className="mb-4 px-4 py-2 bg-red-100 text-red-700 rounded">{error}</div>
+        )}
 
-      <ul>
-        {tasks.map(task => (
-          <li key={task.id}>
-            <div>
-              <strong>ID:</strong> {task.id}
-            </div>
-            <div>
-              <strong>Task:</strong> {task.task}
-            </div>
-            <div>
-              <strong>Assigned to:</strong> {task.user_id}
-            </div>
-            <div>
-              <strong>Status:</strong> {task.is_complete ? 'Completed' : 'Incomplete'}
-            </div>
-            {editingTaskId === task.id ? (
-              <>
-                <input
-                  type="text"
-                  value={editingTaskText}
-                  onChange={(e) => setEditingTaskText(e.target.value)}
-                />
-                <button onClick={() => handleUpdateTask(task.id)}>Save</button>
-                <button onClick={() => setEditingTaskId(null)}>Cancel</button>
-              </>
-            ) : (
-              <>
-                {/* If role is Admin, provide edit and toggle complete options */}
-                {userRole === 'Admins' && (
+        {userRole === 'SimpleUsers' && (
+          <form onSubmit={handleCreateTask} className="flex gap-2 mb-6">
+            <input
+              type="text"
+              placeholder="Enter new task"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              className="flex-1 px-4 py-2 border border-fuchsia-300 rounded focus:ring-2 focus:ring-fuchsia-300 outline-none"
+            />
+            <button
+              type="submit"
+              className="bg-fuchsia-500 hover:bg-fuchsia-600 text-white px-4 py-2 rounded transition"
+            >
+              Add Task
+            </button>
+          </form>
+        )}
+
+        <ul className="space-y-6">
+          {tasks.map(task => (
+            <li key={task.id} className="bg-white shadow-md p-4 rounded-lg border-l-4 border-teal-400 animate-fade-in">
+              <div className="text-sm text-gray-500">ID: {task.id}</div>
+              <div className="font-bold text-lg mb-1">
+                {editingTaskId === task.id ? (
+                  <input
+                    type="text"
+                    value={editingTaskText}
+                    onChange={(e) => setEditingTaskText(e.target.value)}
+                    className="w-full border border-sky-300 px-3 py-2 rounded focus:ring-2 focus:ring-sky-300"
+                  />
+                ) : (
+                  task.task
+                )}
+              </div>
+              <div className="text-sm text-gray-600">Assigned to: {task.user_id}</div>
+              <div className="text-sm text-gray-600 mb-2">
+                Status: <span className={task.is_complete ? "text-lime-600 font-semibold" : "text-orange-500 font-semibold"}>
+                  {task.is_complete ? 'Completed' : 'Incomplete'}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {editingTaskId === task.id ? (
                   <>
-                    <button onClick={() => handleEditTask(task.id, task.task)}>Edit</button>
-                    <button onClick={() => handleToggleComplete(task.id, task.is_complete)}>
-                      Mark as {task.is_complete ? 'Incomplete' : 'Completed'}
+                    <button
+                      onClick={() => handleUpdateTask(task.id)}
+                      className="bg-sky-500 text-white px-3 py-1 rounded hover:bg-sky-600"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingTaskId(null)}
+                      className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {userRole === 'Admins' && (
+                      <>
+                        <button
+                          onClick={() => handleEditTask(task.id, task.task)}
+                          className="bg-fuchsia-500 text-white px-3 py-1 rounded hover:bg-fuchsia-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleComplete(task.id, task.is_complete)}
+                          className="bg-lime-500 text-white px-3 py-1 rounded hover:bg-lime-600"
+                        >
+                          {task.is_complete ? 'Mark Incomplete' : 'Mark Complete'}
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    >
+                      Delete
                     </button>
                   </>
                 )}
-                {/* Provide delete option for both roles */}
-                <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
-              </>
-            )}
-            <hr />
-          </li>
-        ))}
-      </ul>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
