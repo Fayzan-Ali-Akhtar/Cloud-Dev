@@ -16,14 +16,17 @@ const Login = () => {
         body: JSON.stringify({ email, password })
       });
       const data = await response.json();
+      console.log('Login response:', data);
+      console.log('Login response role:', data.role);
       if (response.ok) {
         setMessage(data.message);
         // Save tokens (example using localStorage)
         localStorage.setItem('accessToken', data.data.AuthenticationResult.AccessToken);
         localStorage.setItem('idToken', data.data.AuthenticationResult.IdToken);
         // Optionally save role if needed: data.role
-        // Navigate to a protected page such as the profile page
-        navigate('/profile');
+        localStorage.setItem('userRole', data.role)
+        // Navigate to feed page after successful login.
+        navigate('/feed');
       } else {
         setMessage(data.error);
       }
