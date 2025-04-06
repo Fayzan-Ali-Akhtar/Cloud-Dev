@@ -65,24 +65,34 @@ app.get('/', checkAuth, (req, res) => {
 });
 
 // Login route
-app.get('/login', (req, res) => {
-    const nonce = generators.nonce();
-    const state = generators.state();
-    req.session.nonce = nonce;
-    req.session.state = state;
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    const secretHash = generateSecretHash(email, clientId, clientSecret);
 
-    const authUrl = client.authorizationUrl({
-        scope: 'openid profile email',
-        state,
-        nonce
-    });
+    const params = {
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        ClientId: clientId,
+        AuthParameters: {
+            USERNAME: email,
+            PASSWORD: password,
+            SECRET_HASH: secretHash
+        }
+    };
 
-    res.redirect(authUrl);
+    try {
+        const data = await cognito.initiateAuth(params).promise();
+        res.status(200).json({ message: 'Login successful', data });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(400).json({ error: err.message });
+    }
 });
+
 
 // Callback handler
 app.get('/callback', async (req, res) => {
     try {
+        console.log('Callback route hit');
         const params = client.callbackParams(req);
         const tokenSet = await client.callback(
             'http://localhost:3000/callback',
@@ -100,6 +110,7 @@ app.get('/callback', async (req, res) => {
 
 // Signup route
 app.post('/signup', async (req, res) => {
+    console.log('Signup route hit');
     const { email, password } = req.body;
 
     const secretHash = generateSecretHash(email, clientId, clientSecret);
@@ -124,6 +135,7 @@ app.post('/signup', async (req, res) => {
 });
 
 app.post('/confirm', async (req, res) => {
+    console.log('Confirm route hit');
     const { email, code } = req.body;
 
     const secretHash = generateSecretHash(email, clientId, clientSecret);
@@ -147,6 +159,7 @@ app.post('/confirm', async (req, res) => {
 
 // Logout route
 app.get('/logout', (req, res) => {
+    console.log('Logout route hit');
     req.session.destroy();
     const logoutUrl = `https://${userPoolId}.auth.us-east-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=http://localhost:3000/`;
     res.redirect(logoutUrl);
