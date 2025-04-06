@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
 const express = require('express');
 const session = require('express-session');
 const { Issuer, generators } = require('openid-client');
@@ -109,8 +111,6 @@ app.post('/login', async (req, res) => {
     }
 });
 
-
-
 // Callback handler
 app.get('/callback', async (req, res) => {
     try {
@@ -188,8 +188,6 @@ app.post('/confirm', async (req, res) => {
     }
 });
 
-
-
 // Logout route
 app.get('/logout', (req, res) => {
     console.log('Logout route hit');
@@ -197,6 +195,53 @@ app.get('/logout', (req, res) => {
     const logoutUrl = `https://${userPoolId}.auth.us-east-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=http://localhost:3000/`;
     res.redirect(logoutUrl);
 });
+
+// JWKS client setup for verifying tokens
+const clientJwks = jwksClient({
+    jwksUri: `https://cognito-idp.us-east-1.amazonaws.com/${userPoolId}/.well-known/jwks.json`,
+    cache: true,
+    rateLimit: true
+});
+
+// Function to get the signing key
+function getKey(header, callback) {
+    clientJwks.getSigningKey(header.kid, function(err, key) {
+        const signingKey = key.getPublicKey();
+        callback(null, signingKey);
+    });
+}
+
+// Middleware to verify token using JWKS
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    jwt.verify(token, getKey, {
+        algorithms: ['RS256'],
+        issuer: `https://cognito-idp.us-east-1.amazonaws.com/${userPoolId}`
+    }, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ error: 'Token is invalid or expired', details: err.message });
+        }
+        req.user = decoded;
+        next();
+    });
+};
+
+app.get('/profile', authenticateToken, (req, res) => {
+    const username = req.user['username'];
+    const groups = req.user['cognito:groups'];
+    const role = groups && groups.length > 0 ? groups[0] : 'Unknown';
+
+    res.status(200).json({
+        message: 'Secure profile info',
+        username: username,
+        role: role
+    });
+});
+
 
 app.listen(port, () => {
     console.log(`App running on http://localhost:${port}`);
