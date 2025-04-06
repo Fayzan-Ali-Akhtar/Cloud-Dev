@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { confirm_url } from './constants';
+import LoadingSpinner from './components/LoadingSpinner';
 
 const Confirm = () => {
   const location = useLocation();
@@ -36,53 +37,84 @@ const Confirm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lime-100 via-fuchsia-100 to-sky-100 flex items-center justify-center p-4">
-      <div className="bg-white shadow-2xl rounded-xl p-8 w-full max-w-md border-4 border-lime-400 animate-fade-in">
-        <h2 className="text-3xl font-extrabold text-lime-600 text-center mb-6">Confirm Account</h2>
-
-        {message && (
-          <div className={`mb-4 px-4 py-2 rounded text-sm text-white ${message.toLowerCase().includes("success") ? 'bg-sky-500' : 'bg-red-500'}`}>
-            {message}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent-100 to-secondary-100 p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-card overflow-hidden transform transition-all animate-fade-in">
+          <div className="bg-accent text-accent-foreground py-6 px-8 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold">Confirm Your Account</h2>
+            <p className="text-accent-100 mt-1 text-sm">Enter your verification code</p>
           </div>
-        )}
+          
+          <div className="p-6 md:p-8">
+            {message && (
+              <div className={`mb-6 px-4 py-3 rounded-lg text-sm ${message.toLowerCase().includes("success") ? 'bg-success-100 text-success-800 border border-success-300' : 'bg-destructive-50 text-destructive border border-destructive/20'}`}>
+                {message}
+              </div>
+            )}
 
-        <form onSubmit={handleConfirm} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded border border-lime-300 focus:ring-4 focus:ring-lime-300 outline-none"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Confirmation Code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            className="w-full px-4 py-3 rounded border border-lime-300 focus:ring-4 focus:ring-lime-300 outline-none"
-            required
-          />
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full px-4 py-3 rounded border border-lime-300 focus:ring-4 focus:ring-lime-300 outline-none"
-          >
-            <option value="SimpleUsers">SimpleUsers</option>
-            <option value="Admins">Admins</option>
-          </select>
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-lime-500 via-green-500 to-teal-500 text-white py-3 rounded font-semibold hover:scale-105 transition-transform"
-            disabled={loading}
-          >
-            {loading ? 'Confirming...' : 'Confirm'}
-          </button>
-        </form>
+            <form onSubmit={handleConfirm} className="space-y-5">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent-300 focus:border-accent-400 outline-none transition-all"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">Confirmation Code</label>
+                <input
+                  id="code"
+                  type="text"
+                  placeholder="Enter code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent-300 focus:border-accent-400 outline-none transition-all"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent-300 focus:border-accent-400 outline-none transition-all bg-white"
+                >
+                  <option value="SimpleUsers">SimpleUsers</option>
+                  <option value="Admins">Admins</option>
+                </select>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-accent hover:bg-accent-600 focus:bg-accent-700 text-accent-foreground py-3 rounded-lg font-medium transition-all focus:ring-4 focus:ring-accent-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    <span>Confirming...</span>
+                  </>
+                ) : 'Confirm Account'}
+              </button>
+            </form>
 
-        <div className="text-center mt-6 space-y-2 text-sm">
-          <p><Link to="/login" className="text-fuchsia-600 hover:underline">Login</Link></p>
-          <p><Link to="/signup" className="text-sky-600 hover:underline">Sign Up</Link></p>
+            <div className="mt-6 text-center space-y-2">
+              <p className="text-gray-600 text-sm">
+                Already confirmed? <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">Login</Link>
+              </p>
+              <p className="text-gray-600 text-sm">
+                Need an account? <Link to="/signup" className="text-secondary-600 hover:text-secondary-700 font-medium">Sign Up</Link>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
