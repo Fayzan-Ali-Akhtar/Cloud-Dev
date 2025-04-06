@@ -301,14 +301,14 @@ app.delete('/tasks/:id', authenticateToken, async (req, res) => {
     const role = groups.length > 0 ? groups[0] : 'SimpleUsers';
 
     try {
-        const taskRes = await pool.query('SELECT * FROM tasks WHERE id = $1', [id]);
+        const taskRes = await pool.query('SELECT * FROM todos WHERE id = $1', [id]);
         const task = taskRes.rows[0];
 
         if (!task) return res.status(404).json({ error: 'Task not found' });
-        if (role !== 'Admins' && task.user_email !== email)
+        if (role !== 'Admins' && task.user_id !== email)
             return res.status(403).json({ error: 'Not authorized to delete this task' });
 
-        await pool.query('DELETE FROM tasks WHERE id = $1', [id]);
+        await pool.query('DELETE FROM todos WHERE id = $1', [id]);
         res.json({ message: 'Task deleted' });
     } catch (err) {
         console.error(err);
@@ -320,15 +320,15 @@ app.delete('/tasks/:id', authenticateToken, async (req, res) => {
 app.put('/tasks/:id', authenticateToken, async (req, res) => {
     console.log('PUT /tasks/:id route hit');
     const { id } = req.params;
-    const { title, description } = req.body;
+    const { task } = req.body;
     const groups = req.user['cognito:groups'] || [];
     const role = groups.length > 0 ? groups[0] : 'SimpleUsers';
 
     if (role !== 'Admins') return res.status(403).json({ error: 'Only admins can update tasks' });
 
     try {
-        const query = 'UPDATE tasks SET title = $1, description = $2 WHERE id = $3 RETURNING *';
-        const values = [title, description, id];
+        const query = 'UPDATE todos SET task = $1 WHERE id = $2 RETURNING *';
+        const values = [task, id];
         const { rows } = await pool.query(query, values);
 
         if (rows.length === 0) return res.status(404).json({ error: 'Task not found' });
