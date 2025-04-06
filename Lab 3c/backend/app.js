@@ -344,6 +344,29 @@ app.put('/tasks/:id', authenticateToken, async (req, res) => {
         console.error(err);
         res.status(500).json({ error: 'Failed to update task' });
     }
+
+});
+// PUT /tasks/:id: Only Admins can update tasks status.
+app.put('/tasks/status/:id', authenticateToken, async (req, res) => {
+    console.log('PUT /tasks/status/:id route hit');
+    const { id } = req.params;
+    const { is_complete } = req.body;
+    const groups = req.user['cognito:groups'] || [];
+    const role = groups.length > 0 ? groups[0] : 'SimpleUsers';
+
+    if (role !== 'Admins') return res.status(403).json({ error: 'Only admins can update tasks' });
+
+    try {
+        const query = 'UPDATE todos SET is_complete = $1 WHERE id = $2 RETURNING *';
+        const values = [is_complete, id];
+        const { rows } = await pool.query(query, values);
+
+        if (rows.length === 0) return res.status(404).json({ error: 'Task not found' });
+        res.json(rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update task' });
+    }
 });
 
 app.get('/profile', authenticateToken, (req, res) => {

@@ -21,8 +21,7 @@ const Feed = () => {
     } else {
       fetchTasks();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, navigate]);
 
   const fetchTasks = async () => {
     try {
@@ -81,6 +80,23 @@ const Feed = () => {
     }
   };
 
+  const handleToggleComplete = async (taskId, currentStatus) => {
+    try {
+      const updatedStatus = !currentStatus;
+    const response = await axios.put(
+        `http://localhost:3000/tasks/status/${taskId}`,
+        { is_complete: updatedStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Update the task's is_complete status in the state
+      setTasks(tasks.map(task =>
+        task.id === taskId ? { ...task, is_complete: updatedStatus } : task
+      ));
+    } catch (err) {
+      setError('Failed to update task status.');
+    }
+  };
+
   const handleDeleteTask = async (taskId) => {
     try {
       await axios.delete(`http://localhost:3000/tasks/${taskId}`, {
@@ -104,7 +120,7 @@ const Feed = () => {
       <h2>Task Feed</h2>
       <button onClick={handleLogout}>Logout</button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      
+
       {/* If role is SimpleUsers, show the create task form */}
       {userRole === 'SimpleUsers' && (
         <form onSubmit={handleCreateTask}>
@@ -117,10 +133,22 @@ const Feed = () => {
           <button type="submit">Add Task</button>
         </form>
       )}
-      
+
       <ul>
         {tasks.map(task => (
           <li key={task.id}>
+            <div>
+              <strong>ID:</strong> {task.id}
+            </div>
+            <div>
+              <strong>Task:</strong> {task.task}
+            </div>
+            <div>
+              <strong>Assigned to:</strong> {task.user_id}
+            </div>
+            <div>
+              <strong>Status:</strong> {task.is_complete ? 'Completed' : 'Incomplete'}
+            </div>
             {editingTaskId === task.id ? (
               <>
                 <input
@@ -133,15 +161,20 @@ const Feed = () => {
               </>
             ) : (
               <>
-                <span>{task.task}</span> <small>(Created at: {new Date(task.created_at).toLocaleString()})</small>
-                {/* If role is Admin, provide edit option */}
+                {/* If role is Admin, provide edit and toggle complete options */}
                 {userRole === 'Admins' && (
-                  <button onClick={() => handleEditTask(task.id, task.task)}>Edit</button>
+                  <>
+                    <button onClick={() => handleEditTask(task.id, task.task)}>Edit</button>
+                    <button onClick={() => handleToggleComplete(task.id, task.is_complete)}>
+                      Mark as {task.is_complete ? 'Incomplete' : 'Completed'}
+                    </button>
+                  </>
                 )}
                 {/* Provide delete option for both roles */}
                 <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
               </>
             )}
+            <hr />
           </li>
         ))}
       </ul>
