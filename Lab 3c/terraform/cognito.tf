@@ -12,20 +12,20 @@ resource "aws_cognito_user_pool_client" "lab_user_pool_client" {
     "ALLOW_REFRESH_TOKEN_AUTH",
     "ALLOW_USER_SRP_AUTH"
   ]
-  generate_secret = false
+
+  generate_secret = true
 }
 
 resource "aws_cognito_user_group" "simple_users" {
   user_pool_id = aws_cognito_user_pool.lab_user_pool.id
-  name         = "SimpleUsers"  
+  name         = "SimpleUsers"
   description  = "Users who can view, add, and delete their own tasks"
   precedence   = 1
 }
 
 resource "aws_cognito_user_group" "admins" {
   user_pool_id = aws_cognito_user_pool.lab_user_pool.id
-  name         = "Admins"       
+  name         = "Admins"
   description  = "Admins who can view, update, and delete tasks from all users"
   precedence   = 0
 }
-
