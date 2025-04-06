@@ -4,17 +4,24 @@ import Signup from './Signup';
 import Confirm from './Confirm';
 import Login from './Login';
 import Feed from './Feed';
+import { PrivateRoute, PublicRoute } from './ProtectedRoutes';
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Signup />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/confirm" element={<Confirm />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/feed" element={<Feed />} />
-        {/* <Route path="/profile" element={<Profile />} /> */}
+        {/* Public Routes */}
+        <Route element={<PublicRoute />}>
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/confirm" element={<Confirm />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Signup />} />
+        </Route>
+        
+        {/* Private Routes */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/feed" element={<Feed />} />
+        </Route>
       </Routes>
     </Router>
   );
