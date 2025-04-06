@@ -117,10 +117,7 @@ const checkAuth = (req, res, next) => {
 
 // Home route – renders a view using EJS
 app.get('/', checkAuth, (req, res) => {
-    res.render('home', {
-        isAuthenticated: req.isAuthenticated,
-        userInfo: req.session.userInfo
-    });
+    res.send("Backend working!");
 });
 
 // Login route (for username/password auth via Cognito)
