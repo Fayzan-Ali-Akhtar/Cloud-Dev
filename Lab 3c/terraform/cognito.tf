@@ -1,6 +1,26 @@
 resource "aws_cognito_user_pool" "lab_user_pool" {
   name = "lab-user-pool"
   tags = var.tags
+
+  auto_verified_attributes = ["email"]  # Enable email verification
+
+  schema {
+    attribute_data_type = "String"
+    name                = "email"
+    required            = true
+    mutable             = true
+  }
+
+  admin_create_user_config {
+    allow_admin_create_user_only = false
+  }
+
+  account_recovery_setting {
+    recovery_mechanism {
+      name     = "verified_email"
+      priority = 1
+    }
+  }
 }
 
 resource "aws_cognito_user_pool_client" "lab_user_pool_client" {

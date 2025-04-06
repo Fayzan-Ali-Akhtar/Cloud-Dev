@@ -4,8 +4,9 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
-  },
+  "start": "node app.js",
+  "dev": "nodemon app.js"
+},
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -14,5 +15,8 @@
     "express": "^4.21.1",
     "express-session": "^1.18.1",
     "openid-client": "^5.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
   }
 }

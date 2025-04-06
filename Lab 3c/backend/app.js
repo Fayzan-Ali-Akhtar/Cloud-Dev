@@ -24,9 +24,9 @@ app.set('view engine', 'ejs');
 AWS.config.update({ region: 'us-east-1' });
 const cognito = new AWS.CognitoIdentityServiceProvider();
 
-const userPoolId = 'us-east-1_VzzfbUzd1';
-const clientId = '3ij1thvkpeonf6nf75enumnv91';
-const clientSecret = '12qqjkns84v6ve9p816siorgpfro7q6qn1gulik3kk1ui1kvdggp';
+const userPoolId = 'us-east-1_Y1MsC2Ygv';
+const clientId = 'm9jia3mrueerpjs1g57arvhmm';
+const clientSecret = '108krbi4jfb2lj4gak4108ivd8h12gub5koeahom7lqgaf406v8d';
 
 // Helper function to generate SECRET_HASH
 function generateSecretHash(username, clientId, clientSecret) {
@@ -123,10 +123,32 @@ app.post('/signup', async (req, res) => {
     }
 });
 
+app.post('/confirm', async (req, res) => {
+    const { email, code } = req.body;
+
+    const secretHash = generateSecretHash(email, clientId, clientSecret);
+
+    const params = {
+        ClientId: clientId,
+        Username: email,
+        ConfirmationCode: code,
+        SecretHash: secretHash
+    };
+
+    try {
+        await cognito.confirmSignUp(params).promise();
+        res.status(200).json({ message: 'User confirmed successfully.' });
+    } catch (err) {
+        console.error('Confirmation error:', err);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+
 // Logout route
 app.get('/logout', (req, res) => {
     req.session.destroy();
-    const logoutUrl = `https://lab-user-pool.auth.us-east-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=http://localhost:3000/`;
+    const logoutUrl = `https://${userPoolId}.auth.us-east-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=http://localhost:3000/`;
     res.redirect(logoutUrl);
 });
 
