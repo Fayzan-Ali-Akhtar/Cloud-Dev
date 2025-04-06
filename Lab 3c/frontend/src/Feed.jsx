@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { get_tasks_url,create_tasks_url,update_task_title_url,update_task_status_url,delete_task_url } from './constants'; 
 
 const Feed = () => {
   const [tasks, setTasks] = useState([]);
@@ -25,7 +26,7 @@ const Feed = () => {
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/tasks', {
+      const response = await axios.get(get_tasks_url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTasks(response.data);
@@ -47,7 +48,7 @@ const Feed = () => {
     if (!newTask) return;
     try {
       const response = await axios.post(
-        'http://localhost:3000/tasks',
+        create_tasks_url,
         { text: newTask },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -67,7 +68,7 @@ const Feed = () => {
   const handleUpdateTask = async (taskId) => {
     try {
       const response = await axios.put(
-        `http://localhost:3000/tasks/${taskId}`,
+        `${update_task_title_url}/${taskId}`,
         { task: editingTaskText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -84,7 +85,7 @@ const Feed = () => {
     try {
       const updatedStatus = !currentStatus;
     const response = await axios.put(
-        `http://localhost:3000/tasks/status/${taskId}`,
+        `${update_task_status_url}/${taskId}`,
         { is_complete: updatedStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -99,7 +100,7 @@ const Feed = () => {
 
   const handleDeleteTask = async (taskId) => {
     try {
-      await axios.delete(`http://localhost:3000/tasks/${taskId}`, {
+      await axios.delete(`${delete_task_url}/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Remove the deleted task from the state

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { confirm_url } from './constants'; 
 
 const Confirm = () => {
   // Retrieve the email passed from the signup page, if available.
@@ -13,7 +14,7 @@ const Confirm = () => {
   const handleConfirm = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/confirm', {
+      const response = await fetch(confirm_url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code, role })
