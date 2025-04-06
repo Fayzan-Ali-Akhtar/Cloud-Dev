@@ -1,5 +1,5 @@
 # Use the official Node.js 20 image as the base image
-FROM node:20
+FROM --platform=linux/arm64 node:20-alpine
 
 # Create and change to the app directory.
 WORKDIR /usr/src/app
@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install production dependencies.
-RUN npm install --only=production
+RUN npm install
 
 # Copy local code to the container image.
 COPY . .
@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Run the web service on container startup.
-CMD [ "npm", "start" ]
+CMD [ "node", "app.js" ]

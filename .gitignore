@@ -8,3 +8,4 @@ Lab 3c/frontend/node_modules
 Lab 3c/backend/node_modules
 Lab 3c/backend/my-node-app.tar
 Lab 3c/backend/terraform_ecr/.terraform
+Lab 3c/backend/terraform_fargate/.terraform

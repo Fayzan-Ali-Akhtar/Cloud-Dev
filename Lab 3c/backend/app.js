@@ -13,7 +13,10 @@ const port = 3000;
 const cors = require('cors');
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true); // Allow requests with no origin (e.g., curl)
+        callback(null, true);
+      },
   credentials: true, // allow cookies if you need them
 }));
 
