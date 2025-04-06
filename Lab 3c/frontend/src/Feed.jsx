@@ -81,9 +81,28 @@ const Feed = () => {
     }
   };
 
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await axios.delete(`http://localhost:3000/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Remove the deleted task from the state
+      setTasks(tasks.filter(task => task.id !== taskId));
+    } catch (err) {
+      setError('Failed to delete task.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userRole');
+    navigate('/login');
+  };
+
   return (
     <div>
       <h2>Task Feed</h2>
+      <button onClick={handleLogout}>Logout</button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       
       {/* If role is SimpleUsers, show the create task form */}
@@ -119,6 +138,8 @@ const Feed = () => {
                 {userRole === 'Admins' && (
                   <button onClick={() => handleEditTask(task.id, task.task)}>Edit</button>
                 )}
+                {/* Provide delete option for both roles */}
+                <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
               </>
             )}
           </li>
