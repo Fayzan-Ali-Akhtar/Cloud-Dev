@@ -2,6 +2,8 @@ const express = require('express');
 const session = require('express-session');
 const { Issuer, generators } = require('openid-client');
 const AWS = require('aws-sdk');
+const crypto = require('crypto');
+
 const app = express();
 const port = 3000;
 
@@ -12,27 +14,36 @@ app.use(session({
     saveUninitialized: false
 }));
 
-// Body parser for JSON input
+// Parse JSON bodies
 app.use(express.json());
 
 // Setup EJS view engine
 app.set('view engine', 'ejs');
 
-// AWS Cognito config
+// AWS Cognito configuration
 AWS.config.update({ region: 'us-east-1' });
-
 const cognito = new AWS.CognitoIdentityServiceProvider();
+
 const userPoolId = 'us-east-1_VzzfbUzd1';
 const clientId = '3ij1thvkpeonf6nf75enumnv91';
+const clientSecret = '12qqjkns84v6ve9p816siorgpfro7q6qn1gulik3kk1ui1kvdggp';
 
-// Initialize Cognito OIDC client
+// Helper function to generate SECRET_HASH
+function generateSecretHash(username, clientId, clientSecret) {
+    return crypto
+        .createHmac('SHA256', clientSecret)
+        .update(username + clientId)
+        .digest('base64');
+}
+
+// Initialize Cognito OpenID Connect client
 let client;
 
 async function initializeClient() {
-    const issuer = await Issuer.discover('https://cognito-idp.us-east-1.amazonaws.com/us-east-1_VzzfbUzd1');
+    const issuer = await Issuer.discover(`https://cognito-idp.us-east-1.amazonaws.com/${userPoolId}`);
     client = new issuer.Client({
         client_id: clientId,
-        client_secret: '12qqjkns84v6ve9p816siorgpfro7q6qn1gulik3kk1ui1kvdggp', // Replace with actual secret
+        client_secret: clientSecret,
         redirect_uris: ['http://localhost:3000/callback'],
         response_types: ['code']
     });
@@ -91,15 +102,15 @@ app.get('/callback', async (req, res) => {
 app.post('/signup', async (req, res) => {
     const { email, password } = req.body;
 
+    const secretHash = generateSecretHash(email, clientId, clientSecret);
+
     const params = {
         ClientId: clientId,
+        SecretHash: secretHash,
         Username: email,
         Password: password,
         UserAttributes: [
-            {
-                Name: 'email',
-                Value: email
-            }
+            { Name: 'email', Value: email }
         ]
     };
 
