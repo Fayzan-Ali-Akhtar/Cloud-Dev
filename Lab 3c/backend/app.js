@@ -10,6 +10,13 @@ const { Pool } = require('pg');
 const app = express();
 const port = 3000;
 
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true, // allow cookies if you need them
+}));
+
 // Setup session middleware
 app.use(session({
     secret: 'supersecretkey',
